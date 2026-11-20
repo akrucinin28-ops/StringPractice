@@ -1,51 +1,71 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
-Console.WriteLine("Введите CSV-строку:");
-string line = Console.ReadLine() ?? "";
+ThreadSafeLogger logger = new ThreadSafeLogger();
 
-string[] fields = ParseCsv(line);
+Thread[] threads = new Thread[5];
 
-foreach (string field in fields)
+for (int i = 0; i < threads.Length; i++)
 {
-    Console.WriteLine(field);
+    int threadId = i + 1;
+
+    threads[i] = new Thread(() =>
+    {
+        for (int j = 1; j <= 1000; j++)
+        {
+            logger.Log($"Поток {threadId}: сообщение {j}");
+        }
+    });
+
+    threads[i].Start();
 }
 
-static string[] ParseCsv(string line)
+foreach (Thread thread in threads)
 {
-    List<string> fields = new List<string>();
-    StringBuilder field = new StringBuilder();
-    bool inQuotes = false;
+    thread.Join();
+}
 
-    for (int i = 0; i < line.Length; i++)
+string result = logger.GetLog();
+
+Console.WriteLine(result);
+Console.WriteLine($"Всего сообщений: {logger.Count}");
+
+class ThreadSafeLogger
+{
+    private readonly StringBuilder sb = new StringBuilder();
+    private readonly object locker = new object();
+    private int count = 0;
+
+    public void Log(string message)
     {
-        char c = line[i];
-
-        if (c == '"')
+        lock (locker)
         {
-            if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
-            {
-                field.Append('"');
-                i++;
-            }
-            else
-            {
-                inQuotes = !inQuotes;
-            }
+            sb.AppendLine(message);
+            count++;
         }
-        else if (c == ',' && !inQuotes)
+    }
+    public void LogUnsafe(string message)
+    {
+        sb.AppendLine(message);
+        count++;
+    }
+    public string GetLog()
+    {
+        lock (locker)
         {
-            fields.Add(field.ToString());
-            field.Clear();
-        }
-        else
-        {
-            field.Append(c);
+            return sb.ToString();
         }
     }
 
-    fields.Add(field.ToString());
-
-    return fields.ToArray();
+    public int Count
+    {
+        get
+        {
+            lock (locker)
+            {
+                return count;
+            }
+        }
+    }
 }
