@@ -1,68 +1,41 @@
 ﻿using System;
-using System.Text;
 
-Sale[] sales =
+Console.WriteLine("Введите текст:");
+string text = Console.ReadLine() ?? "";
+
+Console.WriteLine("Введите сдвиг:");
+int k = int.Parse(Console.ReadLine() ?? "0");
+
+string encrypted = Encrypt(text, k);
+string decrypted = Decrypt(encrypted, k);
+
+Console.WriteLine($"Зашифрованный текст: {encrypted}");
+Console.WriteLine($"Расшифрованный текст: {decrypted}");
+
+static string Encrypt(string text, int k)
 {
-    new Sale("Ноутбук", 2, 50000),
-    new Sale("Мышь", 3, 1500),
-    new Sale("Клавиатура", 1, 3000)
-};
+    char[] chars = text.ToCharArray();
 
-ReportBuilder reportBuilder = new ReportBuilder();
+    k = ((k % 26) + 26) % 26;
 
-string report = reportBuilder.BuildReport(sales);
-
-Console.WriteLine(report);
-
-class Sale
-{
-    public string Product { get; set; }
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
-
-    public Sale(string product, int quantity, decimal price)
+    for (int i = 0; i < chars.Length; i++)
     {
-        Product = product;
-        Quantity = quantity;
-        Price = price;
+        char c = chars[i];
+
+        if (c >= 'a' && c <= 'z')
+        {
+            chars[i] = (char)('a' + (c - 'a' + k) % 26);
+        }
+        else if (c >= 'A' && c <= 'Z')
+        {
+            chars[i] = (char)('A' + (c - 'A' + k) % 26);
+        }
     }
+
+    return new string(chars);
 }
 
-class ReportBuilder
+static string Decrypt(string text, int k)
 {
-    public string BuildReport(Sale[] sales)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        sb.AppendLine("ОТЧЁТ О ПРОДАЖАХ");
-        sb.AppendLine($"Дата: {DateTime.Now:dd.MM.yyyy}");
-        sb.AppendLine();
-
-        sb.AppendLine(
-            "Товар".PadRight(20) +
-            "Количество".PadRight(15) +
-            "Цена".PadRight(15) +
-            "Сумма"
-        );
-
-        decimal total = 0;
-
-        foreach (Sale sale in sales)
-        {
-            decimal sum = sale.Quantity * sale.Price;
-            total += sum;
-
-            sb.AppendLine(
-                sale.Product.PadRight(20) +
-                sale.Quantity.ToString().PadRight(15) +
-                sale.Price.ToString("F2").PadRight(15) +
-                sum.ToString("F2")
-            );
-        }
-
-        sb.AppendLine();
-        sb.AppendLine($"Общий итог: {total:F2}");
-
-        return sb.ToString();
-    }
+    return Encrypt(text, -k);
 }
