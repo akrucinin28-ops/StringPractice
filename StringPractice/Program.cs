@@ -1,41 +1,51 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-Console.WriteLine("Введите текст:");
-string text = Console.ReadLine() ?? "";
+Console.WriteLine("Введите CSV-строку:");
+string line = Console.ReadLine() ?? "";
 
-Console.WriteLine("Введите сдвиг:");
-int k = int.Parse(Console.ReadLine() ?? "0");
+string[] fields = ParseCsv(line);
 
-string encrypted = Encrypt(text, k);
-string decrypted = Decrypt(encrypted, k);
-
-Console.WriteLine($"Зашифрованный текст: {encrypted}");
-Console.WriteLine($"Расшифрованный текст: {decrypted}");
-
-static string Encrypt(string text, int k)
+foreach (string field in fields)
 {
-    char[] chars = text.ToCharArray();
+    Console.WriteLine(field);
+}
 
-    k = ((k % 26) + 26) % 26;
+static string[] ParseCsv(string line)
+{
+    List<string> fields = new List<string>();
+    StringBuilder field = new StringBuilder();
+    bool inQuotes = false;
 
-    for (int i = 0; i < chars.Length; i++)
+    for (int i = 0; i < line.Length; i++)
     {
-        char c = chars[i];
+        char c = line[i];
 
-        if (c >= 'a' && c <= 'z')
+        if (c == '"')
         {
-            chars[i] = (char)('a' + (c - 'a' + k) % 26);
+            if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+            {
+                field.Append('"');
+                i++;
+            }
+            else
+            {
+                inQuotes = !inQuotes;
+            }
         }
-        else if (c >= 'A' && c <= 'Z')
+        else if (c == ',' && !inQuotes)
         {
-            chars[i] = (char)('A' + (c - 'A' + k) % 26);
+            fields.Add(field.ToString());
+            field.Clear();
+        }
+        else
+        {
+            field.Append(c);
         }
     }
 
-    return new string(chars);
-}
+    fields.Add(field.ToString());
 
-static string Decrypt(string text, int k)
-{
-    return Encrypt(text, -k);
+    return fields.ToArray();
 }
