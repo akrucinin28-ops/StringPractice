@@ -1,41 +1,68 @@
 ﻿using System;
-using System.Linq;
+using System.Text;
 
-Console.WriteLine("Введите текст:");
-string text = Console.ReadLine() ?? "";
-
-char[] separators = { ' ', ',', '.', '!', '?', '\n', '\r', '\t', ';', ':' };
-
-string[] words = text.Split(
-    separators,
-    StringSplitOptions.RemoveEmptyEntries
-);
-
-Console.WriteLine($"Символов с пробелами: {text.Length}");
-Console.WriteLine($"Символов без пробелов: {text.Count(c => !char.IsWhiteSpace(c))}");
-Console.WriteLine($"Количество слов: {words.Length}");
-
-int sentences = text.Split(
-    new char[] { '.', '!', '?' },
-    StringSplitOptions.RemoveEmptyEntries
-).Count(s => !string.IsNullOrWhiteSpace(s));
-
-Console.WriteLine($"Количество предложений: {sentences}");
-
-if (words.Length > 0)
+Sale[] sales =
 {
-    Console.WriteLine($"Самое длинное слово: {words.OrderByDescending(w => w.Length).First()}");
-    Console.WriteLine($"Самое короткое слово: {words.OrderBy(w => w.Length).First()}");
+    new Sale("Ноутбук", 2, 50000),
+    new Sale("Мышь", 3, 1500),
+    new Sale("Клавиатура", 1, 3000)
+};
 
-    Console.WriteLine("Топ-5 частых слов:");
+ReportBuilder reportBuilder = new ReportBuilder();
 
-    var topWords = words
-        .GroupBy(w => w.ToLower())
-        .OrderByDescending(g => g.Count())
-        .Take(5);
+string report = reportBuilder.BuildReport(sales);
 
-    foreach (var group in topWords)
+Console.WriteLine(report);
+
+class Sale
+{
+    public string Product { get; set; }
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
+
+    public Sale(string product, int quantity, decimal price)
     {
-        Console.WriteLine($"{group.Key}: {group.Count()}");
+        Product = product;
+        Quantity = quantity;
+        Price = price;
+    }
+}
+
+class ReportBuilder
+{
+    public string BuildReport(Sale[] sales)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.AppendLine("ОТЧЁТ О ПРОДАЖАХ");
+        sb.AppendLine($"Дата: {DateTime.Now:dd.MM.yyyy}");
+        sb.AppendLine();
+
+        sb.AppendLine(
+            "Товар".PadRight(20) +
+            "Количество".PadRight(15) +
+            "Цена".PadRight(15) +
+            "Сумма"
+        );
+
+        decimal total = 0;
+
+        foreach (Sale sale in sales)
+        {
+            decimal sum = sale.Quantity * sale.Price;
+            total += sum;
+
+            sb.AppendLine(
+                sale.Product.PadRight(20) +
+                sale.Quantity.ToString().PadRight(15) +
+                sale.Price.ToString("F2").PadRight(15) +
+                sum.ToString("F2")
+            );
+        }
+
+        sb.AppendLine();
+        sb.AppendLine($"Общий итог: {total:F2}");
+
+        return sb.ToString();
     }
 }
